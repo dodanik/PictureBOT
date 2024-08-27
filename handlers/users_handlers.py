@@ -72,7 +72,7 @@ async def process_callback(callback_query: types.CallbackQuery):
 
 
 
-@user_router.message(StateFilter(None), (F.text == "Settings") | (F.text == "Настройки") | (F.text == "Sozlamalar"))
+@user_router.message((F.text == "Settings") | (F.text == "Настройки") | (F.text == "Sozlamalar"))
 async def settings(message: types.Message, state: FSMContext):
     botlang = await get_botlang()
     await message.answer("Press the corresponding key to change",
@@ -92,50 +92,27 @@ async def download(message: types.Message, state: FSMContext):
     botlang = await get_botlang()
     await message.answer("Select language to download",
                          reply_markup=await create_download_lang_menu())
-    await state.set_state(Download.lang)
 
 
-@user_router.callback_query(Download.lang, lambda c: c.data.startswith('download_lang_'))
-async def download_lang_callback(callback_query: types.CallbackQuery, state: FSMContext):
+
+@user_router.callback_query(lambda c: c.data.startswith('download_lang_'))
+async def download_lang_callback(callback_query: types.CallbackQuery):
     botlang = await get_botlang()
-    download_lang = callback_query.data
-
-    if download_lang == "download_lang_ru":
-        await state.update_data(lang="ru")
-    elif download_lang == "download_lang_en":
-        await state.update_data(lang="en")
-    elif download_lang == "download_lang_uz":
-        await state.update_data(lang="uz")
-    elif download_lang == "download_lang_kz":
-        await state.update_data(lang="kz")
-    elif download_lang == "download_lang_az":
-        await state.update_data(lang="az")
-    elif download_lang == "download_lang_tr":
-        await state.update_data(lang="tr")
-    elif download_lang == "download_lang_br":
-        await state.update_data(lang="br")
-    elif download_lang == "download_lang_ng":
-        await state.update_data(lang="ng")
-    else:
-        await state.update_data(lang="en")
-
-    lang_selected = await state.get_data()
-
+    lang_selected = callback_query.data.split('_')[-1] or "en"
 
     await callback_query.message.answer("Select the type of banners you would like to download. Next, you will be able to enter promocode",
-                                        reply_markup=await create_kb_promoactions(lang_selected['lang']))
-
-    await state.set_state(Download.name_baner)
+                                        reply_markup=await create_kb_promoactions(lang_selected))
 
 
 
-@user_router.callback_query(Download.name_baner, lambda c: c.data.startswith('name_baner_'))
+
+
+@user_router.callback_query(lambda c: c.data.startswith('name_baner_'))
 async def download_name_baner_callback(callback_query: types.CallbackQuery, state: FSMContext):
     botlang = await get_botlang()
     name_baner = callback_query.data.split('name_baner_', 1)[-1]
-    await state.update_data(name_baner=name_baner)
     await callback_query.message.answer("Enter the promo code text:")
-    await state.set_state(Download.promocode)
+
 
 @user_router.message(Download.promocode, F.text)
 async def download_promocode(message: types.Message, state: FSMContext):
