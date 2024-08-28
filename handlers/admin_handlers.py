@@ -3,25 +3,26 @@ import os
 import re
 import zipfile
 import shutil
-from io import BytesIO
 
 from aiogram import Router
 from aiogram import Bot, types, F
-from aiogram.filters import CommandStart, StateFilter
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import InputFile, FSInputFile
+from aiogram.types import FSInputFile
 from aiogram.utils.media_group import MediaGroupBuilder
 
 from drawing_function.drawing_function import process_images_and_add_text
 from dynamic_and_static_data.dynamic_and_static_data import get_botlang, save_botlang, get_banners, save_banners
 from filters.chat_type_filter import ChatTypesFilter, IsAdmin
-from keyboards.admin.admin_add_stock_menu import admin_add_stock_menu
-from keyboards.admin.confirmation_banners import confirmation_banners_kb
+from keyboards.admin.addStock.admin_add_stock_menu import admin_add_stock_menu
+from keyboards.admin.addStock.confirmation_banners import confirmation_banners_kb
 from keyboards.admin.general_menu_admin_kb import general_menu_admins_kb
 from keyboards.admin.inline_admin_kb import kb_upload
-from keyboards.admin.promocode_lication_kb import location_promocode_kb
-from keyboards.admin.сonfirmation_promo import confirmation_promocode_kb
+from keyboards.admin.addStock.promocode_lication_kb import location_promocode_kb
+from keyboards.change.change_menu_start import create_kb_chang
+from keyboards.change.change_visibility import create_change_visibility_kb
+from keyboards.change.toggle_visibility_kb import create_toggle_visibility_kb
 
 admin_router = Router()
 admin_router.message.filter(ChatTypesFilter(['private']), IsAdmin())
@@ -72,7 +73,9 @@ async def upload_process_callback(callback_query: types.CallbackQuery, state: FS
         await callback_query.message.answer("Select what to add:",
                                             reply_markup=await admin_add_stock_menu())
     elif action == 'action_change':
-        await callback_query.message.edit_reply_markup(reply_markup=None)
+
+        await callback_query.message.answer("Select what to change:",
+                                            reply_markup=await create_kb_chang())
 
     elif action == 'action_delete':
         await callback_query.message.edit_reply_markup(reply_markup=None)
@@ -439,3 +442,128 @@ async def upload_confirmation_promo_banners_process_callback(callback_query: typ
         await save_banners(banners)
         await callback_query.message.reply(f"Promotion {data['stock_name']} added successfully to Promo!",
                             reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+
+
+
+
+
+
+
+
+
+
+#_____________________________________________Change
+
+
+
+
+@admin_router.callback_query(lambda c: c.data.startswith('change_start_'))
+async def change_menu(callback_query: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    data = callback_query.data
+
+    if data == "change_start_basic_banners":
+        button_click = data.split("change_start_")[1]
+        await callback_query.message.answer("Choose what you want to change(Basic banners)?", reply_markup=await create_change_visibility_kb(button_click))
+
+    if data == "change_start_promo":
+        button_click = data.split("change_start_")[1]
+        await callback_query.message.answer("Choose what you want to change(Promo)?",
+                                            reply_markup=await create_change_visibility_kb(button_click))
+
+
+
+@admin_router.callback_query(lambda c: c.data.startswith('change_selecting_section_'))
+async def change_menu_selecting_section(callback_query: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    banners = await get_banners()
+    data = callback_query.data
+
+    if data == "change_selecting_section_basic_banners_visibility":
+        visibility_data = {key: value.get("visibility") for key, value in banners["basic_banners"].items()}
+        await callback_query.message.answer("Click on the promotion to change the visibility value (Basic banners):",
+                                            reply_markup=await create_toggle_visibility_kb(visibility_data, "basic_banners_"))
+
+    if data == "change_selecting_section_promo_visibility":
+        visibility_data = {key: value.get("visibility") for key, value in {k: v for k, v in banners.items() if k != "basic_banners"}.items()}
+        await callback_query.message.answer("Click on the promotion to change the visibility value (Basic banners):",
+                                            reply_markup=await create_toggle_visibility_kb(visibility_data,  "promo_"))
+
+    if data == "change_selecting_section_basic_banners_banners":
+        button_click = data.split("change_start_")[1]
+        await callback_query.message.answer("Choose what you want to change(Promo)?",
+                                            reply_markup=await create_change_visibility_kb(button_click))
+
+    if data == "change_selecting_section_promo_banners":
+        button_click = data.split("change_start_")[1]
+        await callback_query.message.answer("Choose what you want to change(Promo)?",
+                                            reply_markup=await create_change_visibility_kb(button_click))
+
+
+@admin_router.callback_query(lambda c: c.data.startswith('toggle_visibility_'))
+async def handle_toggle_visibility(callback_query: types.CallbackQuery, state: FSMContext):
+    banners = await get_banners()
+
+    prefix_basic_banners = 'toggle_visibility_basic_banners_'
+    prefix_promo = 'toggle_visibility_promo_'
+
+
+
+    # Проверяем наличие префиксов и извлекаем значение
+    if prefix_basic_banners in callback_query.data:
+        # Извлекаем значение после префикса
+        text = callback_query.data.split(prefix_basic_banners, 1)[1]
+        key_to_update = text.replace('_', ' ')
+        for category, items in banners.items():
+            if isinstance(items, dict):
+                if key_to_update in items:
+                    # Инвертируем текущее значение 'visibility'
+                    items[key_to_update]['visibility'] = not items[key_to_update]['visibility']
+
+        visibility_data = {key: value.get("visibility") for key, value in banners["basic_banners"].items()}
+
+        # Обновляем сообщение с новой клавиатурой
+        await callback_query.message.edit_reply_markup(reply_markup=await create_toggle_visibility_kb(visibility_data, "basic_banners_"))
+
+    elif prefix_promo in callback_query.data:
+        # Извлекаем значение после префикса
+        text = callback_query.data.split(prefix_promo, 1)[1]
+        key_to_update = text.replace('_', ' ')
+
+        if key_to_update in banners:
+            banners[key_to_update]["visibility"] = not banners[key_to_update]["visibility"]
+
+        visibility_data = {key: value.get("visibility") for key, value in
+                           {k: v for k, v in banners.items() if k != "basic_banners"}.items()}
+
+        # Обновляем сообщение с новой клавиатурой
+        await callback_query.message.edit_reply_markup(
+            reply_markup=await create_toggle_visibility_kb(visibility_data, "promo_"))
+
+    await save_banners(banners)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
