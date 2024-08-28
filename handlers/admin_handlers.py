@@ -14,12 +14,13 @@ from aiogram.types import InputFile, FSInputFile
 from aiogram.utils.media_group import MediaGroupBuilder
 
 from drawing_function.drawing_function import process_images_and_add_text
-from dynamic_and_static_data.dynamic_and_static_data import get_botlang, save_botlang
+from dynamic_and_static_data.dynamic_and_static_data import get_botlang, save_botlang, get_banners, save_banners
 from filters.chat_type_filter import ChatTypesFilter, IsAdmin
 from keyboards.admin.admin_add_stock_menu import admin_add_stock_menu
 from keyboards.admin.confirmation_banners import confirmation_banners_kb
 from keyboards.admin.general_menu_admin_kb import general_menu_admins_kb
 from keyboards.admin.inline_admin_kb import kb_upload
+from keyboards.admin.promocode_lication_kb import location_promocode_kb
 from keyboards.admin.сonfirmation_promo import confirmation_promocode_kb
 
 admin_router = Router()
@@ -38,6 +39,7 @@ class AddStockBasicBanners(StatesGroup):
 
 class AddStockPromo(StatesGroup):
     stock_name = State()
+    promocode_location = State()
     data_zip = State()
     file_info = State()
 
@@ -93,18 +95,23 @@ async def upload_add_stock_process_callback(callback_query: types.CallbackQuery,
 
 
 
+#_____________________________________________AddStockBasicBanners
 
-
-
-@admin_router.message(AddStockBasicBanners.stock_name, F.text)
+@admin_router.message(AddStockBasicBanners.stock_name, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def add_name_stock_basic_banner(message: types.Message, state: FSMContext):
-    if message.text and re.match(r'^[A-Za-z0-9]+$', message.text):
-        await state.update_data(stock_name=message.text)
-        await message.answer("Select the availability of a promotional code for this promotion",
-                             reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
-        await state.set_state(AddStockBasicBanners.data_zip)
+    if message.text:
+        words = message.text.split()
+        if all(re.fullmatch(r'^[A-Za-z0-9]+$', word) for word in words):
+            await state.update_data(stock_name=message.text)
+            await message.answer("Send a zip archive with images",
+                                 reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+            await state.set_state(AddStockBasicBanners.data_zip)
+        else:
+            await message.answer("Please enter the correct banner name:",
+                                 reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+            await state.set_state(AddStockBasicBanners.stock_name)
     else:
-        await message.answer("Enter the correct promotion name:",
+        await message.answer("Please enter the correct banner name:",
                              reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.set_state(AddStockBasicBanners.stock_name)
 
@@ -120,7 +127,7 @@ async def add_name_stock_basic_banner(message: types.Message, state: FSMContext)
 async def handle_basic_banner_zip_file(message: types.Message, bot: Bot, state: FSMContext):
     # Проверка, что файл является ZIP архивом
     if not message.document.file_name.endswith('.zip'):
-        await message.reply("Пожалуйста, отправьте ZIP-архив.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await message.reply("Please send a ZIP archive.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.set_state(AddStockBasicBanners.data_zip)
     else:
         LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ng']
@@ -164,8 +171,9 @@ async def handle_basic_banner_zip_file(message: types.Message, bot: Bot, state: 
                     # Создание медиагруппы
                     media_group = MediaGroupBuilder()
                     data_state = await state.get_data()
-                    if False:
-                        await process_images_and_add_text(files, "TEST", (100, 100))
+                    promo_files = [file for file in files if '_promo_' in file]
+                    if promo_files:
+                        await process_images_and_add_text(promo_files, "TEST", (100, 100))
 
                     for file_path in files:
                         media_group.add_photo(media=FSInputFile(file_path))
@@ -182,7 +190,6 @@ async def handle_basic_banner_zip_file(message: types.Message, bot: Bot, state: 
                     )
                     await asyncio.sleep(1/3)
 
-
             await message.answer("Add banners?", reply_markup=await confirmation_banners_kb())
 
             # Удаление временной директории и её содержимого
@@ -190,16 +197,10 @@ async def handle_basic_banner_zip_file(message: types.Message, bot: Bot, state: 
             await state.set_state(AddStockBasicBanners.file_info)
 
 
-
-
-
 @admin_router.callback_query(AddStockBasicBanners.file_info, lambda c: c.data.startswith('confirmation_banners_'))
 async def upload_confirmation_banners_process_callback(callback_query: types.CallbackQuery, state: FSMContext, bot: Bot):
     action = callback_query.data
-    banners = {
-        "basic_banners": {
-        }
-    }
+    banners = await get_banners()
     if action == 'confirmation_banners_remake':
         await callback_query.message.answer("Select what to add:",
                                             reply_markup=await admin_add_stock_menu())
@@ -225,8 +226,10 @@ async def upload_confirmation_banners_process_callback(callback_query: types.Cal
                     suffix = file_name.split('_')[-1].split('.')[0]
                     language = suffix  # Язык находится в конце имени файла перед расширением
 
-                    # Создание папки для языка и типа промо
+                    # Определение пути к папке для извлечения
                     folder_path = os.path.join(main_folder_path, language, promo_type)
+
+                    # Создание папки для языка и типа промо
                     os.makedirs(folder_path, exist_ok=True)
 
                     # Определение имени файла без путей
@@ -238,10 +241,68 @@ async def upload_confirmation_banners_process_callback(callback_query: types.Cal
                     # Извлечение файла
                     with open(extract_path, 'wb') as out_file:
                         out_file.write(archive.read(file_name))
-        print(banners)
+                    if data['stock_name'] not in banners['basic_banners']:
+                        banners['basic_banners'][data['stock_name']] = {'visibility': True}
+
+                    # Заполнение словаря баннеров
+                    if language not in banners['basic_banners'][data['stock_name']]:
+                        banners['basic_banners'][data['stock_name']][language] = {'promo': [], 'no_promo': []}
+
+                    # Добавление пути к файлу в соответствующий массив
+                    relative_path = os.path.relpath(extract_path, ".")
+                    banners['basic_banners'][data['stock_name']][language][promo_type].append(relative_path)
+        await state.clear()
+        await save_banners(banners)
         await callback_query.message.reply(f"Promotion {data['stock_name']} added successfully!",
                             reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
-        await state.clear()
+
+
+
+
+
+
+
+#_____________________________________________AddStockPromo
+@admin_router.message(AddStockPromo.stock_name, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+async def add_name_stock_basic_banner(message: types.Message, state: FSMContext, bot: Bot):
+    files = ["img/bottom_left.png", "img/top_bottom.png", "img/top_cener.png"]
+    if message.text:
+        words = message.text.split()
+        if all(re.fullmatch(r'^[A-Za-z0-9]+$', word) for word in words):
+            await state.update_data(stock_name=message.text)
+            await message.answer("Example of location:", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True) )
+            for file_path in files:
+                await bot.send_photo(chat_id=message.chat.id, photo=FSInputFile(file_path))
+
+            await message.answer("Select the location of the promo code:",
+                                 reply_markup=await location_promocode_kb())
+            await state.set_state(AddStockPromo.promocode_location)
+        else:
+            await message.answer("Please enter the correct banner name:",
+                                 reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+            await state.set_state(AddStockPromo.stock_name)
+    else:
+        await message.answer("Please enter the correct banner name:",
+                             reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.set_state(AddStockPromo.stock_name)
+
+
+# Обработчик нажатий на кнопки выбора
+@admin_router.callback_query(AddStockPromo.promocode_location, lambda c: c.data and c.data.startswith('location_promocode_'))
+async def process_location_promocode(callback_query: types.CallbackQuery, state: FSMContext):
+    data = callback_query.data
+
+    if "location_promocode_apply_" in data:
+        selected_text = data.split("location_promocode_apply_")[1]
+        await state.update_data(promocode_location=selected_text)
+        await callback_query.message.answer(f"You have selected:{selected_text}",
+                                 reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+    else:
+        # Обновление выбора
+        selected = data.replace("location_promocode_", "").replace("_", " ")
+        # Обновляем клавиатуру с выбранной кнопкой
+        keyboard = await location_promocode_kb(selected)
+        await callback_query.message.edit_text("Please select an option:", reply_markup=keyboard)
 
 
 
