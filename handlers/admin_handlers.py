@@ -253,7 +253,7 @@ async def upload_confirmation_banners_process_callback(callback_query: types.Cal
                     banners['basic_banners'][data['stock_name']][language][promo_type].append(relative_path)
         await state.clear()
         await save_banners(banners)
-        await callback_query.message.reply(f"Promotion {data['stock_name']} added successfully!",
+        await callback_query.message.reply(f"Promotion {data['stock_name']} added successfully to Basic banners!",
                             reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
 
 
@@ -264,7 +264,7 @@ async def upload_confirmation_banners_process_callback(callback_query: types.Cal
 
 #_____________________________________________AddStockPromo
 @admin_router.message(AddStockPromo.stock_name, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
-async def add_name_stock_basic_banner(message: types.Message, state: FSMContext, bot: Bot):
+async def add_name_stock_promo_banner(message: types.Message, state: FSMContext, bot: Bot):
     files = ["img/bottom_left.png", "img/top_bottom.png", "img/top_cener.png"]
     if message.text:
         words = message.text.split()
@@ -289,14 +289,15 @@ async def add_name_stock_basic_banner(message: types.Message, state: FSMContext,
 
 # Обработчик нажатий на кнопки выбора
 @admin_router.callback_query(AddStockPromo.promocode_location, lambda c: c.data and c.data.startswith('location_promocode_'))
-async def process_location_promocode(callback_query: types.CallbackQuery, state: FSMContext):
+async def process_location_promo_promocode(callback_query: types.CallbackQuery, state: FSMContext):
     data = callback_query.data
 
     if "location_promocode_apply_" in data:
         selected_text = data.split("location_promocode_apply_")[1]
-        await state.update_data(promocode_location=selected_text)
-        await callback_query.message.answer(f"You have selected:{selected_text}",
+        await state.update_data(promocode_location=selected_text.lower())
+        await callback_query.message.answer("Send a zip archive with images",
                                  reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.set_state(AddStockPromo.data_zip)
     else:
         # Обновление выбора
         selected = data.replace("location_promocode_", "").replace("_", " ")
@@ -306,4 +307,135 @@ async def process_location_promocode(callback_query: types.CallbackQuery, state:
 
 
 
+@admin_router.message(AddStockPromo.data_zip, F.document)
+async def handle_promo_banner_zip_file(message: types.Message, bot: Bot, state: FSMContext):
+    # Проверка, что файл является ZIP архивом
+    if not message.document.file_name.endswith('.zip'):
+        await message.reply("Please send a ZIP archive.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.set_state(AddStockPromo.data_zip)
+    else:
+        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ng']
+        ALLOWED_EXTENSIONS = ['.jpg', '.jpeg']
 
+        # Загрузка архива
+        file_info = await bot.get_file(message.document.file_id)
+        await state.update_data(file_info=file_info.file_path)
+        downloaded_file = await bot.download_file(file_info.file_path)
+
+        # Проверка наличия файлов нужного типа в архиве
+        with zipfile.ZipFile(downloaded_file, 'r') as zip_ref:
+            file_list = zip_ref.namelist()
+            if not any(file.lower().endswith(tuple(ALLOWED_EXTENSIONS)) for file in file_list):
+                await message.reply(
+                    "The archive does not contain supported files (JPEG). Please send an archive with JPEG images.",
+                    reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+                await state.set_state(AddStockPromo.data_zip)
+            else:
+                # Создание уникальной временной директории для распаковки
+                temp_dir = os.path.join(".", f"temp_{message.chat.id}")
+                os.makedirs(temp_dir, exist_ok=True)
+
+                # Распаковка ZIP-архива
+                zip_ref.extractall(temp_dir)
+
+            # Группировка файлов по языковым окончаниям
+            language_groups = {}
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    for lang in LANGUAGES:
+                        if file.endswith(f'_{lang}.jpg') or file.endswith(f'_{lang}.jpeg'):  # Поддерживаемые форматы
+                            relative_path = os.path.relpath(os.path.join(root, file), ".")
+                            if lang not in language_groups:
+                                language_groups[lang] = []
+                            language_groups[lang].append(relative_path)
+
+            # Отправка файлов по группам
+            for lang, files in language_groups.items():
+                if files:
+                    # Создание медиагруппы
+                    media_group = MediaGroupBuilder()
+                    data_state = await state.get_data()
+                    promo_files = [file for file in files if '_promo_' in file]
+                    if promo_files:
+                        await process_images_and_add_text(promo_files, "TEST", (100, 100))
+
+                    for file_path in files:
+                        media_group.add_photo(media=FSInputFile(file_path))
+
+                    # Отправка медиагруппы
+                    first_media = media_group.build()[0] if media_group.build() else None
+                    caption = f"{lang.upper()}"
+                    if first_media:
+                        first_media.caption = caption
+
+                    await bot.send_media_group(
+                        chat_id=message.chat.id,
+                        media=media_group.build()
+                    )
+                    await asyncio.sleep(1/3)
+
+            await message.answer("Add banners?", reply_markup=await confirmation_banners_kb())
+
+            # Удаление временной директории и её содержимого
+            shutil.rmtree(temp_dir)
+            await state.set_state(AddStockPromo.file_info)
+
+
+@admin_router.callback_query(AddStockPromo.file_info, lambda c: c.data.startswith('confirmation_banners_'))
+async def upload_confirmation_promo_banners_process_callback(callback_query: types.CallbackQuery, state: FSMContext, bot: Bot):
+    action = callback_query.data
+    banners = await get_banners()
+    if action == 'confirmation_banners_remake':
+        await callback_query.message.answer("Select what to add:",
+                                            reply_markup=await admin_add_stock_menu())
+        await state.clear()
+
+    elif action == 'confirmation_banners_apply':
+        data = await state.get_data()
+        downloaded_file = await bot.download_file(data['file_info'])
+        os.makedirs(os.path.join('stock_data', data['stock_name']), exist_ok=True)
+
+        main_folder_path = os.path.join("stock_data", data['stock_name'])
+
+        with zipfile.ZipFile(downloaded_file) as archive:
+            for file_name in archive.namelist():
+                if '_' in file_name:
+                    # Определение типа промо
+                    if '_promo_' in file_name:
+                        promo_type = 'promo'
+                    else:
+                        promo_type = 'no_promo'
+
+                    # Извлечение языка (после последнего '_')
+                    suffix = file_name.split('_')[-1].split('.')[0]
+                    language = suffix  # Язык находится в конце имени файла перед расширением
+
+                    # Определение пути к папке для извлечения
+                    folder_path = os.path.join(main_folder_path, language, promo_type)
+
+                    # Создание папки для языка и типа промо
+                    os.makedirs(folder_path, exist_ok=True)
+
+                    # Определение имени файла без путей
+                    file_name_without_path = os.path.basename(file_name)
+
+                    # Полный путь для извлечения
+                    extract_path = os.path.join(folder_path, file_name_without_path)
+
+                    # Извлечение файла
+                    with open(extract_path, 'wb') as out_file:
+                        out_file.write(archive.read(file_name))
+                    if data['stock_name'] not in banners:
+                        banners[data['stock_name']] = {'visibility': True, 'position_promo': data['promocode_location']}
+
+                    # Заполнение словаря баннеров
+                    if language not in banners[data['stock_name']]:
+                        banners[data['stock_name']][language] = {'promo': [], 'no_promo': []}
+
+                    # Добавление пути к файлу в соответствующий массив
+                    relative_path = os.path.relpath(extract_path, ".")
+                    banners[data['stock_name']][language][promo_type].append(relative_path)
+        await state.clear()
+        await save_banners(banners)
+        await callback_query.message.reply(f"Promotion {data['stock_name']} added successfully to Promo!",
+                            reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
