@@ -8,9 +8,9 @@ async def create_toggle_visibility_kb(data, section):
     for key, visibility in data.items():
         # Определяем текст кнопки в зависимости от значения visibility
         icon = "♻️" if visibility else "💤"
-        text = f"{key} {icon}"
+        text = f"{icon} {key} {icon}"
         # Добавляем кнопку с соответствующим текстом и callback_data
-        kb_settings_user.button(text=text, callback_data=f"toggle_visibility_{section}{key.replace(' ', '_')}")
+        kb_settings_user.button(text=text, callback_data=f"tgg_vsblt_{section}{key.replace(' ', '_')}")
 
     # Настраиваем количество кнопок в рядке
     kb_settings_user.adjust(2)
