@@ -440,7 +440,7 @@ async def handle_promo_banner_zip_file(message: types.Message, bot: Bot, state: 
                     # Создание медиагруппы
                     media_group = MediaGroupBuilder()
                     data_state = await state.get_data()
-                    promocode_location = data_state["data_state"]
+                    promocode_location = data_state["promocode_location"]
                     promo_files = [file for file in files if '_promo_' in file]
                     if promo_files:
                         await process_images_and_add_text(promo_files, "TEST", promocode_location)
