@@ -1,13 +1,14 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-#Времення функция до написания логики автогенеравции по доступным файлам
-async def create_kb_promoactions(lang):
+
+async def create_kb_promoactions(data, lang):
     # Создаем клавиатуру
-    kb_settings_user = InlineKeyboardBuilder()
-    kb_settings_user.button(text="RU_Promotions", callback_data="name_baner_ru")
-    kb_settings_user.button(text="EN_promotions", callback_data="name_baner_ru")
+    promoactions = InlineKeyboardBuilder()
+    promoactions.button(text="Basic banners", callback_data=f"basic_bnrs_{lang}")
+    for name in data:
+        promoactions.button(text=name, callback_data=f"NM_BN_{name.replace(' ', '_')}_{lang}")
 
     # Настраиваем количество кнопок в рядке.
-    kb_settings_user.adjust(2)
+    promoactions.adjust(2)
 
-    return kb_settings_user.as_markup(resize_keyboard=True)
+    return promoactions.as_markup(resize_keyboard=True)

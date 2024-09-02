@@ -14,7 +14,8 @@ from aiogram.utils.media_group import MediaGroupBuilder
 
 from drawing_function.drawing_function import process_images_and_add_text
 from dynamic_and_static_data.dynamic_and_static_data import get_botlang, save_botlang, get_banners, save_banners
-from filters.chat_type_filter import ChatTypesFilter, IsAdmin
+from filters.chat_type_filter import ChatTypesFilter, IsAdmin, get_my_admins_list, my_admins_list_add, \
+    my_admins_list_remove
 from func.update_banners_list import update_banners_list
 from keyboards.admin.addStock.admin_add_stock_menu import admin_add_stock_menu
 from keyboards.admin.addStock.confirmation_banners import confirmation_banners_kb
@@ -32,6 +33,7 @@ from keyboards.admin.change.change_name_offer_kb import create_change_name_offer
 from keyboards.admin.change.change_visibility import create_change_visibility_kb
 from keyboards.admin.change.menu_list_change_banners import create_list_change_banners_kb
 from keyboards.admin.change.toggle_visibility_kb import create_toggle_visibility_kb
+from keyboards.admin.settings_kb import create_kb_change_admin
 
 admin_router = Router()
 admin_router.message.filter(ChatTypesFilter(['private']), IsAdmin())
@@ -54,6 +56,14 @@ class AddStockPromo(StatesGroup):
     file_info = State()
 
 
+class AddAdmin(StatesGroup):
+    user_id = State()
+    user_name = State()
+
+class DeleteAdmin(StatesGroup):
+    user_id = State()
+    user_name = State()
+
 
 @admin_router.message(CommandStart())
 async def start(message: types.Message, state: FSMContext):
@@ -62,6 +72,69 @@ async def start(message: types.Message, state: FSMContext):
     botlang = await get_botlang()
     botlang[message.chat.id] = 'en'
     await save_botlang(botlang)
+
+
+
+
+
+@admin_router.message(F.text == "Settings")
+async def settings_menu_admin(message: types.Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Admin management:", reply_markup=await create_kb_change_admin())
+
+
+@admin_router.callback_query(lambda c: c.data.startswith('select_admin_'))
+async def add_del_admin_menu(callback_query: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    if callback_query.data == "select_admin_add_admin":
+        await callback_query.message.answer("Enter the telegram ID of the new admin (Numbers only)", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.set_state(AddAdmin.user_id)
+    elif callback_query.data == "select_admin_del_admin":
+        admins = await get_my_admins_list()
+        await callback_query.message.answer("Admins now:", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        for admin in admins:
+            await callback_query.message.answer(f"{admin}")
+        await callback_query.message.answer("Enter the ID of the admin you want to delete", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.set_state(DeleteAdmin.user_id)
+
+
+
+@admin_router.message(AddAdmin.user_id,(F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+async def add_admin(message: types.Message, state: FSMContext):
+    try:
+        admin_id = int(message.text)
+        await my_admins_list_add(admin_id)
+        await state.clear()
+        await message.answer("Admin ADDED!", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+    except ValueError:
+        await message.answer("You entered an incorrect user ID.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.clear()
+
+
+@admin_router.message(DeleteAdmin.user_id, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+async def del_admin(message: types.Message, state: FSMContext):
+    try:
+        if message.from_user.id != int(message.text):
+            if int(message.text) not in [5233415694, 270770023]:
+                remove_admin_list = await my_admins_list_remove(int(message.text))
+                admin_list = await get_my_admins_list()
+                if remove_admin_list:
+                    await message.answer(f"Admin REMOVED!\n List of admins:")
+                    for admin in admin_list:
+                        await message.answer(f"{admin}", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+                else:
+                    await message.answer(f"Administrator with this ID was not found\n List of admins:\n {admin_list}", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+
+            else:
+                await message.answer("Just try to take aim at the main one!", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+
+        else:
+            await message.answer("YOU CAN'T DELETE YOURSELF)))", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.clear()
+    except ValueError:
+        await message.answer("You entered an incorrect user ID.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.clear()
+
 
 
 @admin_router.message(F.text == "Upload")
@@ -185,7 +258,7 @@ async def handle_basic_banner_zip_file(message: types.Message, bot: Bot, state: 
                     data_state = await state.get_data()
                     promo_files = [file for file in files if '_promo_' in file]
                     if promo_files:
-                        await process_images_and_add_text(promo_files, "TEST", (100, 100))
+                        await process_images_and_add_text(promo_files, "TEST")
 
                     for file_path in files:
                         media_group.add_photo(media=FSInputFile(file_path))
@@ -367,9 +440,10 @@ async def handle_promo_banner_zip_file(message: types.Message, bot: Bot, state: 
                     # Создание медиагруппы
                     media_group = MediaGroupBuilder()
                     data_state = await state.get_data()
+                    promocode_location = data_state["data_state"]
                     promo_files = [file for file in files if '_promo_' in file]
                     if promo_files:
-                        await process_images_and_add_text(promo_files, "TEST", (100, 100))
+                        await process_images_and_add_text(promo_files, "TEST", promocode_location)
 
                     for file_path in files:
                         media_group.add_photo(media=FSInputFile(file_path))
@@ -802,7 +876,7 @@ async def cahnge_basic_banner_zip_file(message: types.Message, bot: Bot, state: 
                     data_state = await state.get_data()
                     promo_files = [file for file in files if '_promo_' in file]
                     if promo_files:
-                        await process_images_and_add_text(promo_files, "TEST", (100, 100))
+                        await process_images_and_add_text(promo_files, "TEST")
 
                     for file_path in files:
                         media_group.add_photo(media=FSInputFile(file_path))
@@ -1107,9 +1181,10 @@ async def handle_change_promo_banner_zip_file(message: types.Message, bot: Bot, 
                     # Создание медиагруппы
                     media_group = MediaGroupBuilder()
                     data_state = await state.get_data()
+                    promocode_location = data_state["promocode_location"]
                     promo_files = [file for file in files if '_promo_' in file]
                     if promo_files:
-                        await process_images_and_add_text(promo_files, "TEST", (100, 100))
+                        await process_images_and_add_text(promo_files, "TEST", promocode_location)
 
                     for file_path in files:
                         media_group.add_photo(media=FSInputFile(file_path))
@@ -1287,7 +1362,7 @@ async def remove_offer_to_name(callback_query: types.CallbackQuery, state: FSMCo
                     media_group = MediaGroupBuilder()
                     data_state = await state.get_data()
 
-                    await process_images_and_add_text(promo_temp_paths, "TEST", (100, 100))
+                    await process_images_and_add_text(promo_temp_paths, "TEST")
 
                     for file_path in all_temp_paths:
                         media_group.add_photo(media=FSInputFile(file_path))
@@ -1365,7 +1440,7 @@ async def remove_offer_to_name(callback_query: types.CallbackQuery, state: FSMCo
                     media_group = MediaGroupBuilder()
                     data_state = await state.get_data()
 
-                    await process_images_and_add_text(promo_temp_paths, "TEST", (100, 100))
+                    await process_images_and_add_text(promo_temp_paths, "TEST", position_promo)
 
                     for file_path in all_temp_paths:
                         media_group.add_photo(media=FSInputFile(file_path))
