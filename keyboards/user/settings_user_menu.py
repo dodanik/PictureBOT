@@ -5,9 +5,9 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 async def create_settings_menu(language: str):
     # Словарь с текстами кнопок на разных языках
     buttons_text = {
-        "uz": ["Qo'llab-quvvatlash", "Bot tilini o'zgartirish"],
-        "ru": ["Поддержка", "Изменить язык бота"],
-        "en": ["Support", "Change Bot language"]
+        "uz": ["💬 Qo'llab-quvvatlash", "🌐 Bot tilini o'zgartirish"],
+        "ru": ["💬 Поддержка", "🌐 Изменить язык бота"],
+        "en": ["💬 Support", "🌐 Change Bot language"]
     }
 
     # Получаем текст кнопок на нужном языке, по умолчанию используем английский

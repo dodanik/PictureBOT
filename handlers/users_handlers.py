@@ -49,7 +49,14 @@ class DownloadBBanners(StatesGroup):
 
 @user_router.message(CommandStart())
 async def start(message: types.Message):
-    await message.answer("You have entered the Name banner bot, please select a language",
+    if message.from_user.language_code == "ru":
+        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption="🎭 Добро пожаловать! 🎭\nЯ БОТ👑 по маркетинговым материалам для наших любимых Партнеров🔥\n🔈 Какой язык Вы бы хотели выбрать для общения ⁉️",
+                             reply_markup=await get_language_keyboard())
+    elif message.from_user.language_code == "uz":
+        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption="🎭 Xush kelibsiz! 🎭\nMen sevimli hamkorlarimiz uchun marketing materiallari bo'limiman 🔥 \n🔈 Qaysi tilda muloqot qilishimizni tanlang: ⁉️",
+                             reply_markup=await get_language_keyboard())
+    else:
+        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption="🎭 Welcome! 🎭\nI am a Marketing Materials BOT 👑 for our beloved Partners ‍🔥 \n🔈 Choose what language you want us to communicate in: ⁉️",
                          reply_markup=await get_language_keyboard())
 
 
@@ -63,18 +70,18 @@ async def process_callback(callback_query: types.CallbackQuery, state: FSMContex
     # Определяем ответ в зависимости от языка
     if language_code == 'lang_ru':
         botlang[callback_query.message.chat.id] = 'ru'
-        response_text = "Вы выбрали русский язык."
+        response_text = "📍 Вы выбрали <b> 🇷🇺 Русский язык</b> 🤝"
     elif language_code == 'lang_en':
         botlang[callback_query.message.chat.id] = 'en'
-        response_text = "You selected English."
+        response_text = "📍 You selected <b> 🇺🇸 English</b> 🤝"
     elif language_code == 'lang_uz':
         botlang[callback_query.message.chat.id] = 'uz'
-        response_text = "Siz o'zbek tilini tanladingiz."
+        response_text = "📍 Siz <b> 🇺🇿 O'zbek</b> tilini tanladingiz 🤝"
     else:
         response_text = "Язык не выбран."
 
     # Отправляем ответ пользователю
-    await callback_query.message.answer(response_text, reply_markup=await create_general_menu(botlang[callback_query.message.chat.id]))
+    await callback_query.message.answer(response_text, reply_markup=await create_general_menu(botlang[callback_query.message.chat.id]), parse_mode="HTML")
 
     # Удаляем инлайн-клавиатуру, если необходимо
     await callback_query.message.edit_reply_markup(reply_markup=None)
@@ -86,7 +93,7 @@ async def process_callback(callback_query: types.CallbackQuery, state: FSMContex
 
 
 
-@user_router.message((F.text == "Settings") | (F.text == "Настройки") | (F.text == "Sozlamalar"))
+@user_router.message((F.text == "🛠️ Settings") | (F.text == "🛠️ Настройки") | (F.text == "🛠️ Sozlamalar"))
 async def settings(message: types.Message, state: FSMContext):
     await state.clear()
     botlang = await get_botlang()
@@ -102,11 +109,11 @@ async def settings_callback(callback_query: types.CallbackQuery, state: FSMConte
 
 
 
-@user_router.message((F.text == "Download") | (F.text == "Скачать") | (F.text == "Yuklab olish"))
+@user_router.message((F.text == "📂 Download") | (F.text == "📂 Скачать") | (F.text == "📂 Yuklab olish"))
 async def download(message: types.Message, state: FSMContext):
     await state.clear()
     botlang = await get_botlang()
-    await message.answer(f"{await get_text_message(botlang[message.chat.id], 'select_language')}",
+    await message.answer_photo(photo=FSInputFile("img/lang.jpg"), caption=f"{await get_text_message(botlang[message.chat.id], 'select_language')}",
                          reply_markup=await create_download_lang_menu())
 
 
@@ -118,7 +125,7 @@ async def download_lang_callback(callback_query: types.CallbackQuery, state: FSM
     banners = await get_banners()
     lang_selected = callback_query.data.split('_')[-1] or "en"
     names_array = await get_keys_with_visibility(banners, lang_selected)
-    await callback_query.message.answer(f"{await get_text_message(botlang[callback_query.message.chat.id], 'select_banners')}",
+    await callback_query.message.answer_photo(photo=FSInputFile("img/choose-banner.jpg"), caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'select_banners')}",
                                         reply_markup=await create_kb_promoactions(names_array, lang_selected))
 
 
@@ -131,7 +138,7 @@ async def download_name_baner_promo_callback(callback_query: types.CallbackQuery
     botlang = await get_botlang()
     text = callback_query.data.split("NM_BN_", 1)[1]
     name_offer, lang = text.rsplit('_', 1)
-    await callback_query.message.answer(f"{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]))
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]))
 
 
 @user_router.callback_query(lambda c: c.data.startswith('dwnl_'))
@@ -237,7 +244,7 @@ async def download_name_baner_basic_(callback_query: types.CallbackQuery, state:
     await state.clear()
     botlang = await get_botlang()
     text = callback_query.data.split("basic_bnrs_", 1)[1]
-    await callback_query.message.answer(f"{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_basic_confirm_kb(text, botlang[callback_query.message.chat.id]))
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_basic_confirm_kb(text, botlang[callback_query.message.chat.id]))
 
 
 @user_router.callback_query(lambda c: c.data.startswith('basic_dwnl_'))
@@ -256,43 +263,56 @@ async def download_confirm_promo_basic_callback(callback_query: types.CallbackQu
     elif "basic_dwnl_no_" in callback_query.data:
         lang = callback_query.data.split("basic_dwnl_no_", 1)[1]
         basic_banners = banners.get('basic_banners', {})
-        no_promo_paths = []
+
+
+        temp_dir = os.path.join(".", f"temp_{callback_query.message.chat.id}")
+        os.makedirs(temp_dir, exist_ok=True)
+        zip_filename = os.path.join(temp_dir, "Basic Banners.zip")
 
         # Проходим по всем баннерам в basic_banners
         for banner_name, banner_info in basic_banners.items():
             if banner_info.get('visibility', False):  # Проверяем, видим ли баннер
+                no_promo_paths = []
                 # Получаем пути к файлам для указанного языка
                 lang_paths = banner_info.get(lang, {})
                 no_promo_paths.extend(lang_paths.get('no_promo', []))
-                temp_dir = os.path.join(".", f"temp_{callback_query.message.chat.id}")
-                os.makedirs(temp_dir, exist_ok=True)
+
+                # Создаём папку для каждого banner_name внутри temp_dir
+                banner_dir = os.path.join(temp_dir, banner_name)
+                os.makedirs(banner_dir, exist_ok=True)
+
                 new_paths = []
                 # Копируем файлы и сохраняем новые пути
                 for path in no_promo_paths:
                     # Получаем имя файла из пути
                     filename = os.path.basename(path)
                     # Формируем новый путь в директории temp_dir
-                    new_path = os.path.join(temp_dir, filename)
+                    new_path = os.path.join(banner_dir, filename)
                     # Копируем файл
                     shutil.copy(path, new_path)
                     # Добавляем новый путь в список
                     new_paths.append(new_path)
-                zip_filename = os.path.join(temp_dir, "Basic Banners.zip")
 
-                # Создаем ZIP-архив
-                with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                    # Проходим по всем файлам в директории temp_dir
-                    for root, dirs, files in os.walk(temp_dir):
-                        for file in files:
-                            file_path = os.path.join(root, file)
-                            # Добавляем файл в архив, исключая сам архив, если он уже существует
-                            if file_path != zip_filename:
-                                zipf.write(file_path, os.path.relpath(file_path, temp_dir))
+        files_exist = any(
+            os.path.isfile(os.path.join(root, file)) for root, dirs, files in os.walk(temp_dir) for file in files)
 
-                await callback_query.message.answer_document(document=FSInputFile(zip_filename),
-                                             caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'zip_without_promo')}")
-                shutil.rmtree(temp_dir)
-                await state.clear()
+        if files_exist:
+            # Создаем ZIP-архив
+            with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                # Проходим по всем файлам в директории temp_dir
+                for root, dirs, files in os.walk(temp_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        # Добавляем файл в архив, исключая сам архив, если он уже существует
+                        if file_path != zip_filename:
+                            zipf.write(file_path, os.path.relpath(file_path, temp_dir))
+            await callback_query.message.answer_document(document=FSInputFile(zip_filename),
+                                                         caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'zip_without_promo')}")
+        else:
+            await callback_query.message.answer("There are no promotions in Basic Banners")
+
+        shutil.rmtree(temp_dir)
+        await state.clear()
 
 @user_router.message(DownloadBBanners.promocode, F.text)
 async def download_promocode_basic(message: types.Message, state: FSMContext):
@@ -303,44 +323,54 @@ async def download_promocode_basic(message: types.Message, state: FSMContext):
         if re.match(r'^[A-Za-z0-9]{1,20}$', message.text):
             basic_banners = banners.get('basic_banners', {})
 
-            promo_paths = []
+
+
+            temp_dir = os.path.join(".", f"temp_{message.chat.id}")
+            os.makedirs(temp_dir, exist_ok=True)
+            zip_filename = os.path.join(temp_dir, "Basic Banners.zip")
 
             # Проходим по всем баннерам в basic_banners
             for banner_name, banner_info in basic_banners.items():
                 if banner_info.get('visibility', False):  # Проверяем, видим ли баннер
+                    promo_paths = []
                     # Получаем пути к файлам для указанного языка
                     lang_paths = banner_info.get(data["lang"], {})
                     promo_paths.extend(lang_paths.get('promo', []))
-                    temp_dir = os.path.join(".", f"temp_{message.chat.id}")
-                    os.makedirs(temp_dir, exist_ok=True)
+
+                    # Создаём папку для каждого banner_name внутри temp_dir
+                    banner_dir = os.path.join(temp_dir, banner_name)
+                    os.makedirs(banner_dir, exist_ok=True)
+
                     new_paths = []
                     # Копируем файлы и сохраняем новые пути
                     for path in promo_paths:
                         # Получаем имя файла из пути
                         filename = os.path.basename(path)
                         # Формируем новый путь в директории temp_dir
-                        new_path = os.path.join(temp_dir, filename)
+                        new_path = os.path.join(banner_dir, filename)
                         # Копируем файл
                         shutil.copy(path, new_path)
                         # Добавляем новый путь в список
                         new_paths.append(new_path)
                     await process_images_and_add_text(new_paths, message.text)
-                    zip_filename = os.path.join(temp_dir, "Basic Banners.zip")
 
-                    # Создаем ZIP-архив
-                    with zipfile.ZipFile(zip_filename, 'w') as zipf:
-                        # Проходим по всем файлам в директории temp_dir
-                        for root, dirs, files in os.walk(temp_dir):
-                            for file in files:
-                                file_path = os.path.join(root, file)
-                                # Добавляем файл в архив, исключая сам архив, если он уже существует
-                                if file_path != zip_filename:
-                                    zipf.write(file_path, os.path.relpath(file_path, temp_dir))
-
-
-                    await message.reply_document(document=FSInputFile(zip_filename), caption=f"{await get_text_message(botlang[message.chat.id], 'zip_with_promo')}")
-                    shutil.rmtree(temp_dir)
-                await state.clear()
+            files_exist = any(os.path.isfile(os.path.join(root, file)) for root, dirs, files in os.walk(temp_dir) for file in files)
+            if files_exist:
+                # Создаем ZIP-архив
+                with zipfile.ZipFile(zip_filename, 'w') as zipf:
+                    # Проходим по всем файлам в директории temp_dir
+                    for root, dirs, files in os.walk(temp_dir):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            # Добавляем файл в архив, исключая сам архив, если он уже существует
+                            if file_path != zip_filename:
+                                zipf.write(file_path, os.path.relpath(file_path, temp_dir))
+                await message.reply_document(document=FSInputFile(zip_filename),
+                                             caption=f"{await get_text_message(botlang[message.chat.id], 'zip_with_promo')}")
+            else:
+                await message.answer("There are no promotions in Basic Banners")
+            shutil.rmtree(temp_dir)
+            await state.clear()
         else:
             await message.answer(f"{await get_text_message(botlang[message.chat.id], 'enter_correct_promo')}")
             await state.set_state(DownloadBBanners.promocode)

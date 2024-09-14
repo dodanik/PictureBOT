@@ -5,9 +5,9 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 async def create_general_menu(language: str):
     # Словарь для текстов кнопок на разных языках
     buttons_text = {
-        "uz": ["Yuklab olish", "Sozlamalar"],
-        "ru": ["Скачать", "Настройки"],
-        "en": ["Download", "Settings"]
+        "uz": ["📂 Yuklab olish", "🛠️ Sozlamalar"],
+        "ru": ["📂 Скачать", "🛠️ Настройки"],
+        "en": ["📂 Download", "🛠️ Settings"]
     }
 
     # Получаем текст кнопок на нужном языке, если язык не найден, используем английский

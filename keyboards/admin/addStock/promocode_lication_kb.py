@@ -8,8 +8,8 @@ async def location_promocode_kb(selected: str = None):
     # Кнопки
     buttons = [
         ("Top center", "location_promocode_Top_center"),
-        ("Top bottom", "location_promocode_Top_bottom"),
-        ("Bottom left", "location_promocode_Bottom_left")
+        ("Bottom center", "location_promocode_Bottom_center"),
+        ("Left bottom", "location_promocode_Left_bottom")
     ]
 
     # Добавляем кнопки с возможностью выбора

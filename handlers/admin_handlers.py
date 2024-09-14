@@ -99,7 +99,7 @@ async def add_del_admin_menu(callback_query: types.CallbackQuery, state: FSMCont
 
 
 
-@admin_router.message(AddAdmin.user_id,(F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(AddAdmin.user_id,(F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def add_admin(message: types.Message, state: FSMContext):
     try:
         admin_id = int(message.text)
@@ -111,7 +111,7 @@ async def add_admin(message: types.Message, state: FSMContext):
         await state.clear()
 
 
-@admin_router.message(DeleteAdmin.user_id, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(DeleteAdmin.user_id, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def del_admin(message: types.Message, state: FSMContext):
     try:
         if message.from_user.id != int(message.text):
@@ -182,7 +182,7 @@ async def upload_add_stock_process_callback(callback_query: types.CallbackQuery,
 
 #_____________________________________________AddStockBasicBanners
 
-@admin_router.message(AddStockBasicBanners.stock_name, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(AddStockBasicBanners.stock_name, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def add_name_stock_basic_banner(message: types.Message, state: FSMContext):
     if message.text:
         words = message.text.split()
@@ -348,7 +348,7 @@ async def upload_confirmation_banners_process_callback(callback_query: types.Cal
 
 
 #_____________________________________________AddStockPromo
-@admin_router.message(AddStockPromo.stock_name, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(AddStockPromo.stock_name, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def add_name_stock_promo_banner(message: types.Message, state: FSMContext, bot: Bot):
     files = ["img/bottom_left.png", "img/top_bottom.png", "img/top_cener.png"]
     if message.text:
@@ -801,7 +801,7 @@ async def handle_data_zip_offer(callback_query: types.CallbackQuery, state: FSMC
 
 
 
-@admin_router.message(ChangeStockBasicBanners.stock_name, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(ChangeStockBasicBanners.stock_name, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def change_name_offer_basic_banners(message: types.Message, state: FSMContext):
     banners = await get_banners()
     names_array = list(banners["basic_banners"].keys())
@@ -1011,7 +1011,7 @@ async def handle_confirm_location_promo_offer(callback_query: types.CallbackQuer
 
 
 
-@admin_router.message(ChangeStockPromo.stock_name, (F.text != "Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(ChangeStockPromo.stock_name, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def change_name_stock_promo_banner(message: types.Message, state: FSMContext, bot: Bot):
 
     if message.text:
@@ -1484,6 +1484,7 @@ async def remove_offer_process(callback_query: types.CallbackQuery, state: FSMCo
                                                     reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
                 await state.clear()
             except Exception as e:
+                await state.clear()
                 print(f"Не удалось удалить папку {folder_path}: {e}")
         else:
             await callback_query.message.answer("This offer no longer exists",
@@ -1501,6 +1502,7 @@ async def remove_offer_process(callback_query: types.CallbackQuery, state: FSMCo
                 await save_banners(banners)
                 await state.clear()
             except Exception as e:
+                await state.clear()
                 print(f"Не удалось удалить папку {folder_path}: {e}")
         else:
             await callback_query.message.answer("This offer no longer exists",
