@@ -70,18 +70,18 @@ async def process_callback(callback_query: types.CallbackQuery, state: FSMContex
     # Определяем ответ в зависимости от языка
     if language_code == 'lang_ru':
         botlang[callback_query.message.chat.id] = 'ru'
-        response_text = "📍 Вы выбрали <b> 🇷🇺 Русский язык</b> 🤝"
+        response_text = '📍 Вы выбрали <b> 🇷🇺 Русский язык</b> 🤝\n\nПродолжите работу с нами! 🚀\nЧтобы получить доступ к вашим баннерам,\nпросто нажмите кнопку "Скачать" 📥.\nВы сможете мгновенно загрузить все необходимые материалы.\n\nЕсли у вас возникли вопросы или вы хотите изменить язык, нажмите кнопку "Настройки" ⚙️.'
     elif language_code == 'lang_en':
         botlang[callback_query.message.chat.id] = 'en'
-        response_text = "📍 You selected <b> 🇺🇸 English</b> 🤝"
+        response_text = "📍 You selected <b> 🇺🇸 English</b> 🤝\n\nContinue working with us! 🚀\nTo access your banners,\njust click the 'Download' button 📥.\nYou will be able to instantly download all the necessary materials.\n\nIf you have any questions or want to change the language, click the 'Settings' button ⚙️."
     elif language_code == 'lang_uz':
         botlang[callback_query.message.chat.id] = 'uz'
-        response_text = "📍 Siz <b> 🇺🇿 O'zbek</b> tilini tanladingiz 🤝"
+        response_text = "📍 Siz <b> 🇺🇿 O'zbek</b> tilini tanladingiz 🤝\n\nBiz bilan ishlashni davom eting! 🚀\nBannerlaringizga kirish uchun 'Yuklab olish' tugmasini bosing 📥.\nSiz zarur materiallarni darhol yuklab olishingiz mumkin.\n\nAgar sizda savollar bo'lsa yoki tildan o'zgartirmoqchi bo'lsangiz, 'Sozlamalar' tugmasini bosing ⚙️."
     else:
         response_text = "Язык не выбран."
 
     # Отправляем ответ пользователю
-    await callback_query.message.answer(response_text, reply_markup=await create_general_menu(botlang[callback_query.message.chat.id]), parse_mode="HTML")
+    await callback_query.message.answer(response_text, reply_markup=await create_general_menu(botlang[callback_query.message.chat.id], callback_query.from_user.id), parse_mode="HTML")
 
     # Удаляем инлайн-клавиатуру, если необходимо
     await callback_query.message.edit_reply_markup(reply_markup=None)
@@ -109,7 +109,7 @@ async def settings_callback(callback_query: types.CallbackQuery, state: FSMConte
 
 
 
-@user_router.message((F.text == "📂 Download") | (F.text == "📂 Скачать") | (F.text == "📂 Yuklab olish"))
+@user_router.message((F.text == "📥 Download") | (F.text == "📥 Скачать") | (F.text == "📥 Yuklab olish"))
 async def download(message: types.Message, state: FSMContext):
     await state.clear()
     botlang = await get_botlang()
@@ -125,7 +125,7 @@ async def download_lang_callback(callback_query: types.CallbackQuery, state: FSM
     banners = await get_banners()
     lang_selected = callback_query.data.split('_')[-1] or "en"
     names_array = await get_keys_with_visibility(banners, lang_selected)
-    await callback_query.message.answer_photo(photo=FSInputFile("img/choose-banner.jpg"), caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'select_banners')}",
+    await callback_query.message.answer_photo(photo=FSInputFile("img/choose-banner.jpg"), caption=f"🌐 {lang_selected.upper()}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'select_banners')}",
                                         reply_markup=await create_kb_promoactions(names_array, lang_selected))
 
 
@@ -138,7 +138,7 @@ async def download_name_baner_promo_callback(callback_query: types.CallbackQuery
     botlang = await get_botlang()
     text = callback_query.data.split("NM_BN_", 1)[1]
     name_offer, lang = text.rsplit('_', 1)
-    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]))
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎑 {name_offer}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]))
 
 
 @user_router.callback_query(lambda c: c.data.startswith('dwnl_'))
@@ -156,7 +156,7 @@ async def download_confirm_promo_callback(callback_query: types.CallbackQuery, s
             await state.set_state(Download.promocode)
             await state.update_data(lang=lang, name_baner=name_offer)
         else:
-            await callback_query.message.answer(f"{await get_text_message(botlang[callback_query.message.chat.id], 'promo_no_exists')}")
+            await callback_query.message.answer(f"{await get_text_message(botlang[callback_query.message.chat.id], 'promo_no_exists')}", reply_markup=await create_general_menu(botlang[callback_query.message.chat.id], callback_query.from_user.id))
     elif "dwnl_no_" in callback_query.data:
         text = callback_query.data.split("dwnl_no_", 1)[1]
         name_offer_text, lang = text.rsplit('_', 1)
@@ -189,7 +189,7 @@ async def download_confirm_promo_callback(callback_query: types.CallbackQuery, s
                             zipf.write(file_path, os.path.relpath(file_path, temp_dir))
 
             await callback_query.message.answer_document(document=FSInputFile(zip_filename),
-                                         caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'zip_without_promo')}")
+                                         caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'zip_without_promo')}", reply_markup=await create_general_menu(botlang[callback_query.message.chat.id], callback_query.from_user.id))
             shutil.rmtree(temp_dir)
             await state.clear()
 
@@ -230,7 +230,7 @@ async def download_promocode(message: types.Message, state: FSMContext):
                                 zipf.write(file_path, os.path.relpath(file_path, temp_dir))
 
 
-                await message.reply_document(document=FSInputFile(zip_filename), caption=f"{await get_text_message(botlang[message.chat.id], 'zip_with_promo')}")
+                await message.reply_document(document=FSInputFile(zip_filename), caption=f"{await get_text_message(botlang[message.chat.id], 'zip_with_promo')}", reply_markup=await create_general_menu(botlang[message.chat.id], message.from_user.id))
                 shutil.rmtree(temp_dir)
             await state.clear()
         else:
@@ -243,8 +243,8 @@ async def download_promocode(message: types.Message, state: FSMContext):
 async def download_name_baner_basic_(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()
     botlang = await get_botlang()
-    text = callback_query.data.split("basic_bnrs_", 1)[1]
-    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_basic_confirm_kb(text, botlang[callback_query.message.chat.id]))
+    lang = callback_query.data.split("basic_bnrs_", 1)[1]
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎑 Basic banners\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_basic_confirm_kb(lang, botlang[callback_query.message.chat.id]))
 
 
 @user_router.callback_query(lambda c: c.data.startswith('basic_dwnl_'))
@@ -307,9 +307,9 @@ async def download_confirm_promo_basic_callback(callback_query: types.CallbackQu
                         if file_path != zip_filename:
                             zipf.write(file_path, os.path.relpath(file_path, temp_dir))
             await callback_query.message.answer_document(document=FSInputFile(zip_filename),
-                                                         caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'zip_without_promo')}")
+                                                         caption=f"{await get_text_message(botlang[callback_query.message.chat.id], 'zip_without_promo')}", reply_markup=await create_general_menu(botlang[callback_query.message.chat.id], callback_query.from_user.id))
         else:
-            await callback_query.message.answer("There are no promotions in Basic Banners")
+            await callback_query.message.answer("There are no promotions in Basic Banners", reply_markup=await create_general_menu(botlang[callback_query.message.chat.id], callback_query.from_user.id))
 
         shutil.rmtree(temp_dir)
         await state.clear()
@@ -366,9 +366,9 @@ async def download_promocode_basic(message: types.Message, state: FSMContext):
                             if file_path != zip_filename:
                                 zipf.write(file_path, os.path.relpath(file_path, temp_dir))
                 await message.reply_document(document=FSInputFile(zip_filename),
-                                             caption=f"{await get_text_message(botlang[message.chat.id], 'zip_with_promo')}")
+                                             caption=f"{await get_text_message(botlang[message.chat.id], 'zip_with_promo')}", reply_markup=await create_general_menu(botlang[message.chat.id], message.from_user.id))
             else:
-                await message.answer("There are no promotions in Basic Banners")
+                await message.answer("There are no promotions in Basic Banners", reply_markup=await create_general_menu(botlang[message.chat.id], message.from_user.id))
             shutil.rmtree(temp_dir)
             await state.clear()
         else:

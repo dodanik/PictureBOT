@@ -1,12 +1,16 @@
+from collections import deque
+
 import ujson as ujson
+from aiogram.dispatcher.event.bases import CancelHandler
 from aiogram.filters import Filter
-from aiogram import Bot, types
+from aiogram import Bot, types, BaseMiddleware
 
 with open("json_data_file/admin_list.json", "r") as file:
     admins = ujson.load(file)
 
 my_admins_list: list[int] = admins
 
+processed_updates = deque(maxlen=100)
 
 async def my_admins_list_add(id):
     global my_admins_list
@@ -50,3 +54,20 @@ class IsAdmin(Filter):
     async def __call__(self, message: types.Message, bot: Bot) -> bool:
         global my_admins_list
         return message.from_user.id in my_admins_list
+
+
+class DuplicatesMiddleware(BaseMiddleware):
+    def __init__(self) -> None:
+        super().__init__()
+
+    async def __call__(self, handler, event: types.CallbackQuery, data: dict):
+        callback_query_id = event.id  # Используем id колбек-запроса
+
+        if callback_query_id in processed_updates:
+            print(f"Duplicate callback query detected: {callback_query_id}")
+            raise CancelHandler()  # Отменяем обработку, если дубликат
+
+        # Если нет, добавляем его в список обработанных
+        processed_updates.append(callback_query_id)
+        # Продолжаем обработку колбек-запроса
+        return await handler(event, data)

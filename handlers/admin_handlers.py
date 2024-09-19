@@ -13,7 +13,8 @@ from aiogram.types import FSInputFile
 from aiogram.utils.media_group import MediaGroupBuilder
 
 from drawing_function.drawing_function import process_images_and_add_text
-from dynamic_and_static_data.dynamic_and_static_data import get_botlang, save_botlang, get_banners, save_banners
+from dynamic_and_static_data.dynamic_and_static_data import get_botlang, save_botlang, get_banners, save_banners, \
+    get_admin_name_list, save_admin_name_list
 from filters.chat_type_filter import ChatTypesFilter, IsAdmin, get_my_admins_list, my_admins_list_add, \
     my_admins_list_remove
 from func.update_banners_list import update_banners_list
@@ -87,46 +88,68 @@ async def settings_menu_admin(message: types.Message, state: FSMContext):
 async def add_del_admin_menu(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()
     if callback_query.data == "select_admin_add_admin":
-        await callback_query.message.answer("Enter the telegram ID of the new admin (Numbers only)", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
-        await state.set_state(AddAdmin.user_id)
+        await callback_query.message.answer("Enter the New Administrator Name:")
+        await state.set_state(AddAdmin.user_name)
     elif callback_query.data == "select_admin_del_admin":
         admins = await get_my_admins_list()
+        admin_name_list = await get_admin_name_list()
         await callback_query.message.answer("Admins now:", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         for admin in admins:
-            await callback_query.message.answer(f"{admin}")
+            admin_name = admin_name_list[admin]
+            await callback_query.message.answer(f"{admin}  -  {admin_name}")
         await callback_query.message.answer("Enter the ID of the admin you want to delete", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.set_state(DeleteAdmin.user_id)
 
 
 
-@admin_router.message(AddAdmin.user_id,(F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(AddAdmin.user_name,(F.text != "📥 Download") & (F.text != "Upload") & (F.text != "Settings"))
+async def add_admin_name(message: types.Message, state: FSMContext):
+    if message.text and message.text.strip():
+        await state.update_data(user_name=message.text)
+        await message.answer("Enter the telegram ID of the new admin (Numbers only)")
+        await state.set_state(AddAdmin.user_id)
+    else:
+        await message.answer("You entered an incorrect name.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await state.clear()
+
+@admin_router.message(AddAdmin.user_id,(F.text != "📥 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def add_admin(message: types.Message, state: FSMContext):
     try:
         admin_id = int(message.text)
         await my_admins_list_add(admin_id)
+        data = await state.get_data()
+        admin_name_list = await get_admin_name_list()
+        admin_name_list[admin_id] = data["user_name"]
+        await message.answer(f"Admin {data['user_name']} ADDED!", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.clear()
-        await message.answer("Admin ADDED!", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+        await save_admin_name_list(admin_name_list)
     except ValueError:
         await message.answer("You entered an incorrect user ID.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.clear()
 
 
-@admin_router.message(DeleteAdmin.user_id, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(DeleteAdmin.user_id, (F.text != "📥 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def del_admin(message: types.Message, state: FSMContext):
     try:
         if message.from_user.id != int(message.text):
             if int(message.text) not in [5233415694, 270770023]:
                 remove_admin_list = await my_admins_list_remove(int(message.text))
                 admin_list = await get_my_admins_list()
+                admin_name_list = await get_admin_name_list()
+                admin_name_list.pop(int(message.text), None)
                 if remove_admin_list:
-                    await message.answer(f"Admin REMOVED!\n List of admins:")
+                    await message.answer(f"Admin REMOVED!\n\nList of admins:")
                     for admin in admin_list:
-                        await message.answer(f"{admin}", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+                        await message.answer(f"{admin} - {admin_name_list[admin]}", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+                    await save_admin_name_list(admin_name_list)
+                    await state.clear()
                 else:
-                    await message.answer(f"Administrator with this ID was not found\n List of admins:\n {admin_list}", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+                    await message.answer(f"Administrator with this ID was not found", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+                    await state.clear()
 
             else:
                 await message.answer("Just try to take aim at the main one!", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+                await state.clear()
 
         else:
             await message.answer("YOU CAN'T DELETE YOURSELF)))", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
@@ -182,7 +205,7 @@ async def upload_add_stock_process_callback(callback_query: types.CallbackQuery,
 
 #_____________________________________________AddStockBasicBanners
 
-@admin_router.message(AddStockBasicBanners.stock_name, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(AddStockBasicBanners.stock_name, (F.text != "📥 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def add_name_stock_basic_banner(message: types.Message, state: FSMContext):
     if message.text:
         words = message.text.split()
@@ -348,7 +371,7 @@ async def upload_confirmation_banners_process_callback(callback_query: types.Cal
 
 
 #_____________________________________________AddStockPromo
-@admin_router.message(AddStockPromo.stock_name, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(AddStockPromo.stock_name, (F.text != "📥 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def add_name_stock_promo_banner(message: types.Message, state: FSMContext, bot: Bot):
     files = ["img/bottom_left.png", "img/top_bottom.png", "img/top_cener.png"]
     if message.text:
@@ -801,7 +824,7 @@ async def handle_data_zip_offer(callback_query: types.CallbackQuery, state: FSMC
 
 
 
-@admin_router.message(ChangeStockBasicBanners.stock_name, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(ChangeStockBasicBanners.stock_name, (F.text != "📥 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def change_name_offer_basic_banners(message: types.Message, state: FSMContext):
     banners = await get_banners()
     names_array = list(banners["basic_banners"].keys())
@@ -1011,7 +1034,7 @@ async def handle_confirm_location_promo_offer(callback_query: types.CallbackQuer
 
 
 
-@admin_router.message(ChangeStockPromo.stock_name, (F.text != "📂 Download") & (F.text != "Upload") & (F.text != "Settings"))
+@admin_router.message(ChangeStockPromo.stock_name, (F.text != "📥 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def change_name_stock_promo_banner(message: types.Message, state: FSMContext, bot: Bot):
 
     if message.text:
@@ -1057,7 +1080,7 @@ async def process__cahnge_location_promo_promocode(callback_query: types.Callbac
     action = callback_query.data
     banners = await get_banners()
     data = await state.get_data()
-    location_promocode = data["promocode_location"]
+    location_promocode = data.get("promocode_location")
     if action == "chg_DT_ZIP_SV_":
         old_name = data["old_name"]
         stock_name = data["stock_name"]
@@ -1083,9 +1106,11 @@ async def process__cahnge_location_promo_promocode(callback_query: types.Callbac
                 await callback_query.message.answer("The offer name and position promo has been successfully changed!",
                                                     reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
                 await save_banners(banners)
+                await state.clear()
             else:
                 await callback_query.message.answer("This offer no longer exists!",
                                                     reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
+                await state.clear()
 
         else:
             if old_name != stock_name:
@@ -1110,17 +1135,23 @@ async def process__cahnge_location_promo_promocode(callback_query: types.Callbac
                                                         reply_markup=general_menu_admins_kb.as_markup(
                                                             resize_keyboard=True))
                     await save_banners(banners)
+                    await state.clear()
 
             else:
                 if location_promocode:
                     old_name = data["old_name"]
                     banners[old_name]["position_promo"] = location_promocode
                     await save_banners(banners)
+                    await callback_query.message.answer("The position of the promotional code has been successfully changed!",
+                                                        reply_markup=general_menu_admins_kb.as_markup(
+                                                            resize_keyboard=True))
+                    await state.clear()
 
                 else:
                     await callback_query.message.answer("No changes to the offer were required!",
                                                         reply_markup=general_menu_admins_kb.as_markup(
                                                             resize_keyboard=True))
+                    await state.clear()
 
     elif action == "chg_DT_ZIP_CHG_":
         if not location_promocode:

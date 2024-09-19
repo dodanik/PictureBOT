@@ -4,16 +4,16 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 # Словарь с переводами для разных языков
 translations = {
     'ru': {
-        'add_promo_code': "Добавить промокод",
-        'without_promo_code': "Без промокода"
+        'add_promo_code': "✨ Добавить промокод",
+        'without_promo_code': "🚫 Без промокода"
     },
     'en': {
-        'add_promo_code': "Add promo code",
-        'without_promo_code': "Without promo code"
+        'add_promo_code': "✨ Add promo code",
+        'without_promo_code': "🚫 Without promo code"
     },
     'uz': {
-        'add_promo_code': "Promo kod qo'shish",
-        'without_promo_code': "Promo kodsiz"
+        'add_promo_code': "✨ Promo kod qo'shish",
+        'without_promo_code': "🚫 Promo kodsiz"
     }
 }
 
