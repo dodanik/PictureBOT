@@ -12,8 +12,8 @@ from filters.chat_type_filter import DuplicatesMiddleware
 from handlers.admin_handlers import admin_router
 from handlers.users_handlers import user_router
 
-#API_TOKEN = '7409271656:AAF8jvGPlm8xFJfA2_OuzWK3SpO3MwFATDE'
-API_TOKEN = '7195566516:AAFeE9-hxd01oAi2Pf92mGQCvw2oOERkPoQ'
+API_TOKEN = '7409271656:AAF8jvGPlm8xFJfA2_OuzWK3SpO3MwFATDE'
+#API_TOKEN = '7195566516:AAFeE9-hxd01oAi2Pf92mGQCvw2oOERkPoQ'
 bot = Bot(API_TOKEN)
 dp = Dispatcher()
 dp.callback_query.middleware(DuplicatesMiddleware())
