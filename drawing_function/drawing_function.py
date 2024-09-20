@@ -14,7 +14,7 @@ async def process_images_and_add_text(image_paths, text, position=False):
     if not position:
         position = (540, 965)
     elif position == "bottom_center":
-        position = (300, 200)
+        position = (540, 964)
     elif position == "top_center":
         position = (150, 150)
     elif position == "left_bottom":
