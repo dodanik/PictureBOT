@@ -88,7 +88,7 @@ async def settings_menu_admin(message: types.Message, state: FSMContext):
 async def add_del_admin_menu(callback_query: types.CallbackQuery, state: FSMContext):
     await state.clear()
     if callback_query.data == "select_admin_add_admin":
-        await callback_query.message.answer("Enter the New Administrator Name:")
+        await callback_query.message.answer("Enter the New Administrator Name (Only in English and symbols _  @ ):")
         await state.set_state(AddAdmin.user_name)
     elif callback_query.data == "select_admin_del_admin":
         admins = await get_my_admins_list()
@@ -104,7 +104,7 @@ async def add_del_admin_menu(callback_query: types.CallbackQuery, state: FSMCont
 
 @admin_router.message(AddAdmin.user_name,(F.text != "📥 Download") & (F.text != "Upload") & (F.text != "Settings"))
 async def add_admin_name(message: types.Message, state: FSMContext):
-    if message.text and message.text.strip():
+    if message.text and message.text.strip() and re.match(r'^[a-zA-Z0-9 _@]+$', message.text):
         await state.update_data(user_name=message.text)
         await message.answer("Enter the telegram ID of the new admin (Numbers only)")
         await state.set_state(AddAdmin.user_id)
@@ -116,13 +116,14 @@ async def add_admin_name(message: types.Message, state: FSMContext):
 async def add_admin(message: types.Message, state: FSMContext):
     try:
         admin_id = int(message.text)
-        await my_admins_list_add(admin_id)
         data = await state.get_data()
         admin_name_list = await get_admin_name_list()
         admin_name_list[admin_id] = data["user_name"]
+        await my_admins_list_add(admin_id)
+        await save_admin_name_list(admin_name_list)
         await message.answer(f"Admin {data['user_name']} ADDED!", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.clear()
-        await save_admin_name_list(admin_name_list)
+
     except ValueError:
         await message.answer("You entered an incorrect user ID.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.clear()

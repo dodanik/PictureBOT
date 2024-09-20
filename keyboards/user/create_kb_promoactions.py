@@ -9,6 +9,6 @@ async def create_kb_promoactions(data, lang):
         promoactions.button(text=f"🎁 {name}", callback_data=f"NM_BN_{name.replace(' ', '_')}_{lang}")
 
     # Настраиваем количество кнопок в рядке.
-    promoactions.adjust(2)
+    promoactions.adjust(1, 1)
 
     return promoactions.as_markup(resize_keyboard=True)
