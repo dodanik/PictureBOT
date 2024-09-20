@@ -138,7 +138,7 @@ async def download_name_baner_promo_callback(callback_query: types.CallbackQuery
     botlang = await get_botlang()
     text = callback_query.data.split("NM_BN_", 1)[1]
     name_offer, lang = text.rsplit('_', 1)
-    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎑 {name_offer}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]))
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎰 {name_offer}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]))
 
 
 @user_router.callback_query(lambda c: c.data.startswith('dwnl_'))
@@ -244,7 +244,7 @@ async def download_name_baner_basic_(callback_query: types.CallbackQuery, state:
     await state.clear()
     botlang = await get_botlang()
     lang = callback_query.data.split("basic_bnrs_", 1)[1]
-    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎑 Basic banners\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_basic_confirm_kb(lang, botlang[callback_query.message.chat.id]))
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎰 Basic banners\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_basic_confirm_kb(lang, botlang[callback_query.message.chat.id]))
 
 
 @user_router.callback_query(lambda c: c.data.startswith('basic_dwnl_'))
