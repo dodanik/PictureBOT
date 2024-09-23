@@ -15,6 +15,7 @@ from filters.chat_type_filter import ChatTypesFilter
 from aiogram import types, F
 
 from func.filter_promoactions_user import get_keys_with_visibility
+from keyboards.user.FAQ_data_text import faq_data_text_func
 from keyboards.user.create_kb_promoactions import create_kb_promoactions
 from keyboards.user.data_text_message import get_text_message
 from keyboards.user.general_menu_kb import create_general_menu
@@ -107,6 +108,14 @@ async def settings_callback(callback_query: types.CallbackQuery, state: FSMConte
     await callback_query.message.edit_reply_markup(reply_markup=await get_language_keyboard())
 
 
+@user_router.message(F.text == "⁉️ FAQ")
+async def faq_handler(message: types.Message, state: FSMContext):
+    await state.clear()
+    botlang = await get_botlang()
+    await message.answer_photo(photo=FSInputFile("img/faq.jpg"), caption=f"{await get_text_message(botlang[message.chat.id], 'faq')}", parse_mode="HTML")
+    await message.answer(f"{await faq_data_text_func(botlang[message.chat.id])}",
+                               reply_markup=await create_general_menu(botlang[message.chat.id], message.from_user.id),
+                               parse_mode="HTML")
 
 
 @user_router.message((F.text == "📥 Download") | (F.text == "📥 Скачать") | (F.text == "📥 Yuklab olish"))

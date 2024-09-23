@@ -10,7 +10,8 @@ async def get_text_message(language, key):
             'promo_no_exists': "❌ Данная акция больше не существует ❌",
             'zip_without_promo': "Вот твой zip-архив!\nСоздал без промокода, как Вы и просили 😉",
             'zip_with_promo': "Смотри, твой zip-архив с промокодом готов!\n🎉🔥 Красота, правда?",
-            'enter_correct_promo': "Пожалуйста, введи корректный промокод. 😜 Не теряйте шанс!"
+            'enter_correct_promo': "Пожалуйста, введи корректный промокод. 😜 Не теряйте шанс!",
+            'faq': "❓ <b>Вопросы и ответы (FAQ)</b>"
         },
         'en': {
             'change_key': "Welcome to the support section! 📚\nHere you can check out the FAQ section, where the most popular answers to users' questions are gathered.\nWe have prepared useful tips and recommendations for you so that you can quickly find the information you need and easily resolve any issues that may arise.\n\nChange Language! 🌐\nYou can also easily change the bot's language. Just select your preferred language, and all messages will be displayed in it.",
@@ -21,7 +22,8 @@ async def get_text_message(language, key):
             'promo_no_exists': "❌ This promotion no longer exists ❌",
             'zip_without_promo': "Here’s your zip archive! Created without a promo code, as you requested 😉",
             'zip_with_promo': "Look, your zip archive with a promo code is ready!\n🎉🔥 Isn’t it beautiful?",
-            'enter_correct_promo': "Please enter a valid promo code. 😜 Don't miss your chance!"
+            'enter_correct_promo': "Please enter a valid promo code. 😜 Don't miss your chance!",
+            'faq': "❓ <b>Questions and Answers (FAQ)</b>"
         },
         'uz': {
             'change_key': "Qo'llab-quvvatlash bo'limiga xush kelibsiz! 📚\nBu yerda siz foydalanuvchilar savollariga eng mashhur javoblar to'plangan FAQ bo'limi bilan tanishishingiz mumkin.\nSizga kerakli ma'lumotni tezda topish va yuzaga keladigan har qanday muammolarni osonlik bilan hal qilish uchun foydali maslahatlar va tavsiyalar tayyorladik.\n\nTilni o'zgartiring! 🌐\nShuningdek, botning tilini osonlik bilan o'zgartirishingiz mumkin. Faqatgina afzal ko'rgan tilni tanlang va barcha xabarlar shu tilda ko'rsatiladi.",
@@ -32,7 +34,8 @@ async def get_text_message(language, key):
             'promo_no_exists': "❌ Ushbu aksiya endi mavjud emas ❌",
             'zip_without_promo': "Mana sizning zip arxivingiz!\nSiz so'raganingizdek, promokodsiz yaratildi 😉",
             'zip_with_promo': "Qarang, sizning promokodli zip arxivingiz tayyor!\n🎉🔥 Chiroyli emasmi?",
-            'enter_correct_promo': "Iltimos, to'g'ri promokodni kiriting.\n😜 O'z imkoniyatingizni boy bermang!"
+            'enter_correct_promo': "Iltimos, to'g'ri promokodni kiriting.\n😜 O'z imkoniyatingizni boy bermang!",
+            'faq': "❓ <b>Savollar va javoblar (FAQ)</b>"
         }
     }
     # Получаем фразу по ключу и языку

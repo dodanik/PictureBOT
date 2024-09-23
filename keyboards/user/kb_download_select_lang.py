@@ -10,7 +10,7 @@ async def create_download_lang_menu():
     kb_settings_user.button(text="AZ", callback_data="dw_lang_az")
     kb_settings_user.button(text="TR", callback_data="dw_lang_tr")
     kb_settings_user.button(text="BR", callback_data="dw_lang_br")
-    kb_settings_user.button(text="NG", callback_data="dw_lang_ng")
+    kb_settings_user.button(text="UR", callback_data="dw_lang_ur")
 
 
     # Настраиваем количество кнопок в рядке

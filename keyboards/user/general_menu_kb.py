@@ -22,9 +22,11 @@ async def create_general_menu(language: str, user_id=False):
         general_menu_kb = ReplyKeyboardBuilder()
         general_menu_kb.add(
             KeyboardButton(text=buttons[0]),
-            KeyboardButton(text=buttons[1])
+            KeyboardButton(text=buttons[1]),
+            KeyboardButton(text="⁉️ FAQ")
+
         )
-        general_menu_kb.adjust(2)
+        general_menu_kb.adjust(2, 1)
 
         return general_menu_kb.as_markup(resize_keyboard=True)
     else:

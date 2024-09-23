@@ -239,7 +239,7 @@ async def handle_basic_banner_zip_file(message: types.Message, bot: Bot, state: 
         await message.reply("Please send a ZIP archive.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.set_state(AddStockBasicBanners.data_zip)
     else:
-        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ng']
+        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ur']
         ALLOWED_EXTENSIONS = ['.jpg', '.jpeg']
 
         # Загрузка архива
@@ -423,7 +423,7 @@ async def handle_promo_banner_zip_file(message: types.Message, bot: Bot, state: 
         await message.reply("Please send a ZIP archive.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.set_state(AddStockPromo.data_zip)
     else:
-        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ng']
+        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ur']
         ALLOWED_EXTENSIONS = ['.jpg', '.jpeg']
 
         # Загрузка архива
@@ -857,7 +857,7 @@ async def cahnge_basic_banner_zip_file(message: types.Message, bot: Bot, state: 
         await message.reply("Please send a ZIP archive.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.set_state(ChangeStockBasicBanners.data_zip)
     else:
-        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ng']
+        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ur']
         ALLOWED_EXTENSIONS = ['.jpg', '.jpeg']
 
         # Загрузка архива
@@ -1172,7 +1172,7 @@ async def handle_change_promo_banner_zip_file(message: types.Message, bot: Bot, 
         await message.reply("Please send a ZIP archive.", reply_markup=general_menu_admins_kb.as_markup(resize_keyboard=True))
         await state.set_state(ChangeStockPromo.data_zip)
     else:
-        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ng']
+        LANGUAGES = ['az', 'uz', 'kz', 'tr', 'ru', 'en', 'br', 'ur']
         ALLOWED_EXTENSIONS = ['.jpg', '.jpeg']
 
         # Загрузка архива
