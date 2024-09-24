@@ -51,14 +51,14 @@ class DownloadBBanners(StatesGroup):
 @user_router.message(CommandStart())
 async def start(message: types.Message):
     if message.from_user.language_code == "ru":
-        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption="🎭 Добро пожаловать! 🎭\nЯ БОТ👑 по маркетинговым материалам для наших любимых Партнеров🔥\n🔈 Какой язык Вы бы хотели выбрать для общения ⁉️",
-                             reply_markup=await get_language_keyboard())
+        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption='🎭 <b>Добро пожаловать!</b> 🎭\nЯ БОТ👑 по маркетинговым материалам для наших любимых Партнеров🔥\nУ нас есть специальный раздел "⁉️ <b>FAQ</b>", где вы найдете ответы на часто задаваемые вопросы.\n\n🔈 Какой язык Вы бы хотели выбрать для общения ⁉️',
+                             reply_markup=await get_language_keyboard(), parse_mode="HTML")
     elif message.from_user.language_code == "uz":
-        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption="🎭 Xush kelibsiz! 🎭\nMen sevimli hamkorlarimiz uchun marketing materiallari bo'limiman 🔥 \n🔈 Qaysi tilda muloqot qilishimizni tanlang: ⁉️",
-                             reply_markup=await get_language_keyboard())
+        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption="🎭 <b>Xush kelibsiz!</b> 🎭\nMen sevimli hamkorlarimiz uchun marketing materiallari bo'limiman 🔥\nBizda tez-tez beriladigan savollarga javoblar topishingiz mumkin bo'lgan maxsus ⁉️ <b>FAQ</b> bo'limi mavjud.\n\n🔈 Qaysi tilda muloqot qilishimizni tanlang: ⁉️",
+                             reply_markup=await get_language_keyboard(), parse_mode="HTML")
     else:
-        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption="🎭 Welcome! 🎭\nI am a Marketing Materials BOT 👑 for our beloved Partners ‍🔥 \n🔈 Choose what language you want us to communicate in: ⁉️",
-                         reply_markup=await get_language_keyboard())
+        await message.answer_photo(photo=FSInputFile("img/start_picture.jpg"), caption="🎭 <b>Welcome!</b> 🎭\nI am a Marketing Materials BOT 👑 for our beloved Partners ‍🔥\nWe have a special ⁉️ <b>FAQ</b> section where you can find answers to frequently asked questions.\n\n🔈 Choose what language you want us to communicate in: ⁉️",
+                         reply_markup=await get_language_keyboard(), parse_mode="HTML")
 
 
 @user_router.callback_query(lambda c: c.data.startswith('lang_'))
@@ -71,13 +71,13 @@ async def process_callback(callback_query: types.CallbackQuery, state: FSMContex
     # Определяем ответ в зависимости от языка
     if language_code == 'lang_ru':
         botlang[callback_query.message.chat.id] = 'ru'
-        response_text = '📍 Вы выбрали <b> 🇷🇺 Русский язык</b> 🤝\n\nПродолжите работу с нами! 🚀\nЧтобы получить доступ к вашим баннерам,\nпросто нажмите кнопку "Скачать" 📥.\nВы сможете мгновенно загрузить все необходимые материалы.\n\nЕсли у вас возникли вопросы или вы хотите изменить язык, нажмите кнопку "Настройки" ⚙️.'
+        response_text = '📍 Вы выбрали <b> 🇷🇺 Русский язык</b> 🤝\n\nПродолжите работу с нами! 🚀\nЧтобы получить доступ к вашим баннерам,\nпросто нажмите кнопку <b>"Скачать"</b> 📥.\nВы сможете мгновенно загрузить все необходимые материалы.\n\nЕсли у вас возникли вопросы или вы хотите изменить язык, нажмите кнопку <b>"Настройки"</b> ⚙️.'
     elif language_code == 'lang_en':
         botlang[callback_query.message.chat.id] = 'en'
-        response_text = "📍 You selected <b> 🇺🇸 English</b> 🤝\n\nContinue working with us! 🚀\nTo access your banners,\njust click the 'Download' button 📥.\nYou will be able to instantly download all the necessary materials.\n\nIf you have any questions or want to change the language, click the 'Settings' button ⚙️."
+        response_text = "📍 You selected <b> 🇺🇸 English</b> 🤝\n\nContinue working with us! 🚀\nTo access your banners,\njust click the <b>'Download'</b> 📥 button.\nYou will be able to instantly download all the necessary materials.\n\nIf you have any questions or want to change the language, click the <b>'Settings'</b> ⚙️ button ."
     elif language_code == 'lang_uz':
         botlang[callback_query.message.chat.id] = 'uz'
-        response_text = "📍 Siz <b> 🇺🇿 O'zbek</b> tilini tanladingiz 🤝\n\nBiz bilan ishlashni davom eting! 🚀\nBannerlaringizga kirish uchun 'Yuklab olish' tugmasini bosing 📥.\nSiz zarur materiallarni darhol yuklab olishingiz mumkin.\n\nAgar sizda savollar bo'lsa yoki tildan o'zgartirmoqchi bo'lsangiz, 'Sozlamalar' tugmasini bosing ⚙️."
+        response_text = "📍 Siz <b> 🇺🇿 O'zbek</b> tilini tanladingiz 🤝\n\nBiz bilan ishlashni davom eting! 🚀\nBannerlaringizga kirish uchun <b>'Yuklab olish'</b> tugmasini bosing 📥.\nSiz zarur materiallarni darhol yuklab olishingiz mumkin.\n\nAgar sizda savollar bo'lsa yoki tildan o'zgartirmoqchi bo'lsangiz, <b>'Sozlamalar'</b> ⚙️ tugmasini bosing."
     else:
         response_text = "Язык не выбран."
 
@@ -98,7 +98,7 @@ async def process_callback(callback_query: types.CallbackQuery, state: FSMContex
 async def settings(message: types.Message, state: FSMContext):
     await state.clear()
     botlang = await get_botlang()
-    await message.answer(f"{await get_text_message(botlang[message.chat.id], 'change_key')}",
+    await message.answer(f"{await get_text_message(botlang[message.chat.id], 'change_key')}", parse_mode="HTML",
                          reply_markup=await create_settings_menu(botlang[message.chat.id]))
 
 
@@ -135,7 +135,7 @@ async def download_lang_callback(callback_query: types.CallbackQuery, state: FSM
     lang_selected = callback_query.data.split('_')[-1] or "en"
     names_array = await get_keys_with_visibility(banners, lang_selected)
     await callback_query.message.answer_photo(photo=FSInputFile("img/choose-banner.jpg"), caption=f"🌐 {lang_selected.upper()}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'select_banners')}",
-                                        reply_markup=await create_kb_promoactions(names_array, lang_selected))
+                                        reply_markup=await create_kb_promoactions(names_array, lang_selected), parse_mode="HTML")
 
 
 
@@ -146,8 +146,9 @@ async def download_name_baner_promo_callback(callback_query: types.CallbackQuery
     await state.clear()
     botlang = await get_botlang()
     text = callback_query.data.split("NM_BN_", 1)[1]
-    name_offer, lang = text.rsplit('_', 1)
-    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎰 {name_offer}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]))
+    name_offer_text, lang = text.rsplit('_', 1)
+    name_offer = name_offer_text.replace('_', ' ')
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎰 {name_offer}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]), parse_mode="HTML")
 
 
 @user_router.callback_query(lambda c: c.data.startswith('dwnl_'))
@@ -253,7 +254,7 @@ async def download_name_baner_basic_(callback_query: types.CallbackQuery, state:
     await state.clear()
     botlang = await get_botlang()
     lang = callback_query.data.split("basic_bnrs_", 1)[1]
-    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎰 Basic banners\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_basic_confirm_kb(lang, botlang[callback_query.message.chat.id]))
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎰 Basic banners\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_basic_confirm_kb(lang, botlang[callback_query.message.chat.id]), parse_mode="HTML")
 
 
 @user_router.callback_query(lambda c: c.data.startswith('basic_dwnl_'))

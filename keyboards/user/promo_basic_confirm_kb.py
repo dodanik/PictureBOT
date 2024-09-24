@@ -29,6 +29,6 @@ async def create_promo_code_basic_confirm_kb(lang, langKb):
     promo_code_confirm.button(text=texts['without_promo_code'], callback_data=f"basic_dwnl_no_{lang}")
 
     # Настраиваем количество кнопок в рядке.
-    promo_code_confirm.adjust(2)
+    promo_code_confirm.adjust(1, 1)
 
     return promo_code_confirm.as_markup(resize_keyboard=True)
