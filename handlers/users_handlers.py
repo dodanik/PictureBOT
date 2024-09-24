@@ -148,7 +148,7 @@ async def download_name_baner_promo_callback(callback_query: types.CallbackQuery
     text = callback_query.data.split("NM_BN_", 1)[1]
     name_offer_text, lang = text.rsplit('_', 1)
     name_offer = name_offer_text.replace('_', ' ')
-    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎰 {name_offer}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]), parse_mode="HTML")
+    await callback_query.message.answer_photo(photo=FSInputFile("img/promocode.jpg"), caption=f"🌐 {lang.upper()}\n🎁 {name_offer}\n\n{await get_text_message(botlang[callback_query.message.chat.id], 'add_promo')}", reply_markup=await create_promo_code_confirm_kb(name_offer, lang, botlang[callback_query.message.chat.id]), parse_mode="HTML")
 
 
 @user_router.callback_query(lambda c: c.data.startswith('dwnl_'))
