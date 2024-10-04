@@ -287,9 +287,9 @@ async def download_confirm_promo_basic_callback(callback_query: types.CallbackQu
                 lang_paths = banner_info.get(lang, {})
                 no_promo_paths.extend(lang_paths.get('no_promo', []))
 
-                # Создаём папку для каждого banner_name внутри temp_dir
-                banner_dir = os.path.join(temp_dir, banner_name)
-                os.makedirs(banner_dir, exist_ok=True)
+                # # Создаём папку для каждого banner_name внутри temp_dir
+                # banner_dir = os.path.join(temp_dir, banner_name)
+                # os.makedirs(banner_dir, exist_ok=True)
 
                 new_paths = []
                 # Копируем файлы и сохраняем новые пути
@@ -297,7 +297,8 @@ async def download_confirm_promo_basic_callback(callback_query: types.CallbackQu
                     # Получаем имя файла из пути
                     filename = os.path.basename(path)
                     # Формируем новый путь в директории temp_dir
-                    new_path = os.path.join(banner_dir, filename)
+                    #new_path = os.path.join(banner_dir, filename) Убрали временно по просьбе афилиатов
+                    new_path = os.path.join(temp_dir, filename)
                     # Копируем файл
                     shutil.copy(path, new_path)
                     # Добавляем новый путь в список
@@ -347,9 +348,9 @@ async def download_promocode_basic(message: types.Message, state: FSMContext):
                     lang_paths = banner_info.get(data["lang"], {})
                     promo_paths.extend(lang_paths.get('promo', []))
 
-                    # Создаём папку для каждого banner_name внутри temp_dir
-                    banner_dir = os.path.join(temp_dir, banner_name)
-                    os.makedirs(banner_dir, exist_ok=True)
+                    # # Создаём папку для каждого banner_name внутри temp_dir
+                    # banner_dir = os.path.join(temp_dir, banner_name)
+                    # os.makedirs(banner_dir, exist_ok=True)
 
                     new_paths = []
                     # Копируем файлы и сохраняем новые пути
@@ -357,7 +358,8 @@ async def download_promocode_basic(message: types.Message, state: FSMContext):
                         # Получаем имя файла из пути
                         filename = os.path.basename(path)
                         # Формируем новый путь в директории temp_dir
-                        new_path = os.path.join(banner_dir, filename)
+                        #new_path = os.path.join(banner_dir, filename) Убрали временно по просьбе афилиатов
+                        new_path = os.path.join(temp_dir, filename)
                         # Копируем файл
                         shutil.copy(path, new_path)
                         # Добавляем новый путь в список
